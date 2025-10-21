@@ -1,8 +1,8 @@
 export const runtime = 'edge';
 
 type GenBody = {
-  mood?: string;
-  category?: string;
+  mood?: string;       // MoodKey
+  category?: string;   // CategoryKey
   diverse?: boolean;
 };
 
@@ -16,12 +16,10 @@ export default async function handler(req: Request): Promise<Response> {
 
     const { mood = '', category = '', diverse = false } = (await req.json()) as GenBody;
 
-    const sys = `You are MoodCaster. Generate a short, first-person Farcaster cast in English. 
-Keep it natural, friendly, and within ~220 characters. Optionally include 1 relevant emoji. 
-Avoid hashtags unless clearly beneficial.`;
+    const sys = `You are MoodCaster. Generate a short, first-person Farcaster cast in English.
+Keep it natural, friendly, within ~220 characters. One emoji max. Avoid hashtags unless clearly helpful.`;
 
-    const user =
-      `Mood: ${mood}\nCategory: ${category}\nConstraints: Keep within 220 characters; avoid hashtags; one emoji max.`;
+    const user = `Mood: ${mood}\nCategory: ${category}`;
 
     const model = process.env.GROQ_MODEL_ID || 'llama-3.1-8b-instant';
     const apiKey = process.env.GROQ_API_KEY;
@@ -31,16 +29,15 @@ Avoid hashtags unless clearly beneficial.`;
       });
     }
 
-    // Abort after 18s to prevent hangs
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort('timeout'), 18000);
+    const timer = setTimeout(() => controller.abort('timeout'), 12000);
 
     const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       signal: controller.signal,
       headers: {
         'content-type': 'application/json',
-        'authorization': `Bearer ${apiKey}`,
+        authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model,
@@ -49,7 +46,7 @@ Avoid hashtags unless clearly beneficial.`;
           { role: 'user', content: user },
         ],
         temperature: diverse ? 0.9 : 0.6,
-        max_tokens: 180,
+        max_tokens: 160, // kısa tut → hızlı dönüş
       }),
     }).finally(() => clearTimeout(timer));
 
