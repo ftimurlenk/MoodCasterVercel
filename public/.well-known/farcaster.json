@@ -1,0 +1,15 @@
+{
+  "name": "MoodCaster",
+  "description": "Generate English AI casts from your mood + category and post to Farcaster.",
+  "iconUrl": "https://your-domain/icon.png",
+  "splashImageUrl": "https://your-domain/og.png",
+  "url": "https://your-domain/",
+  "requestedPermissions": [
+    "cast"
+  ],
+  "accountAssociation": {
+    "header": "0x...",
+    "payload": "eyJkb21haW4iOiJ5b3VyLWRvbWFpbiJ9",
+    "signature": "0x..."
+  }
+}
