@@ -1,11 +1,13 @@
 
-# MoodCaster — Farcaster Mini-App Ready
+# MoodCaster — Farcaster Mini-App Ready (v2)
 
-Keeps your API & UI as-is and adds:
+This package keeps your API & UI intact and adds:
 - `sdk.actions.ready()` (splash close)
-- Cast flow: `requestPermissions(['cast'])` → `composeCast({ text })` with fallbacks
+- Cast flow: `requestPermissions(['cast'])` → `composeCast({ text })` (handles `null` cancel) → haptic feedback when supported
 - Wallet connect: `getEthereumProvider()` (EIP-1193)
-- `fc:miniapp` meta in `index.html`
+- `isInMiniApp()` detection and an **Open in Warpcast** helper
+- **Add to Farcaster** button (`sdk.actions.addMiniApp()`; works on production domain)
+- Minimal `fc:miniapp` meta in `index.html`
 - Placeholder `public/.well-known/farcaster.json` (do not overwrite your verified one in prod)
 
 ## Dev
