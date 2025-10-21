@@ -1,27 +1,24 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { readyMiniApp, postCastFarcaster, isInMiniApp } from "./lib/farcaster";
-import { WalletConnect } from "./components/WalletConnect";
-import { AddMiniApp } from "./components/AddMiniApp";
-import { OpenInWarpcast } from "./components/OpenInWarpcast";
-import { MOODS, CATEGORIES } from "./constants";
+import { Header } from "./components/Header";
+import { Footer } from "./components/Footer";
+import { MoodGrid } from "./components/MoodGrid";
+import { CategoryGrid } from "./components/CategoryGrid";
+import { PreviewPost } from "./components/PreviewPost";
+import { CATEGORIES, CategoryKey, MOODS, MoodKey, MAX_CHARS } from "./constants";
+import { readyMiniApp, isInMiniApp } from "./lib/farcaster";
 import "./styles.css";
 
 type GenResp = { text?: string; error?: string };
 
-const Chip = (p: { label: string; active: boolean; onClick: () => void }) => (
-  <button onClick={p.onClick} className={"chip" + (p.active ? " active" : "")}>
-    {p.label}
-  </button>
-);
-
 export default function App() {
   const [inMini, setInMini] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  const [mood, setMood] = useState<string>("");
-  const [category, setCategory] = useState<string>("");
-  const [prompt, setPrompt] = useState<string>("");
-  const [castText, setCastText] = useState<string>("");
+  const [mood, setMood] = useState<MoodKey | null>(null);
+  const [category, setCategory] = useState<CategoryKey | null>(null);
+  const [diverse, setDiverse] = useState(false);
+
+  const [text, setText] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     document.title = "MoodCaster";
@@ -30,31 +27,34 @@ export default function App() {
   }, []);
 
   const canGenerate = useMemo(() => !!mood && !!category, [mood, category]);
-  const canPost = useMemo(() => !!castText.trim(), [castText]);
 
-  // ====== FIXED: robust JSON parsing & readable errors ======
-  async function handleGenerate() {
-    if (!canGenerate) {
-      alert("Önce mood ve kategori seç.");
-      return;
-    }
+  // ---- Fetch helper with timeout & robust JSON handling ----
+  async function callGenerate() {
+    if (!canGenerate) return;
     setLoading(true);
     try {
+      const controller = new AbortController();
+      const to = setTimeout(() => controller.abort("timeout"), 20000);
+
       const r = await fetch("/api/generate", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ prompt, mood, category }),
+        body: JSON.stringify({
+          mood,
+          category,
+          diverse,
+        }),
+        signal: controller.signal,
+      }).catch((e) => {
+        throw e;
       });
 
-      // JSON yerine HTML dönerse (Vercel error page) kırılma olmasın:
+      clearTimeout(to);
+
       const ct = r.headers.get("content-type") || "";
       let data: any = null;
       if (ct.includes("application/json")) {
-        try {
-          data = await r.json();
-        } catch {
-          data = null;
-        }
+        data = await r.json().catch(() => null);
       } else {
         const txt = await r.text().catch(() => "");
         data = { error: txt.slice(0, 200) || "Non-JSON error response" };
@@ -66,110 +66,70 @@ export default function App() {
         return;
       }
 
-      setCastText((data.text || "").trim());
-    } catch (e) {
-      console.error(e);
-      alert("Metin oluşturma hatası.");
+      setText((data.text || "").trim().slice(0, MAX_CHARS));
+    } catch (err: any) {
+      if (String(err).includes("AbortError") || String(err).includes("timeout")) {
+        alert("Sunucu yavaş yanıt verdi (timeout). Tekrar dene.");
+      } else {
+        console.error(err);
+        alert("Metin oluşturma hatası.");
+      }
     } finally {
       setLoading(false);
     }
   }
 
-  async function handlePost() {
-    const msg = castText.trim();
-    if (!msg) {
-      alert("Önce metni oluştur veya düzenle.");
-      return;
-    }
-    try {
-      const res = await postCastFarcaster(msg);
-      if (res?.cancelled) {
-        // kullanıcı composer'ı iptal etti
-        return;
-      }
-      alert("Cast composer açıldı / gönderildi.");
-    } catch (e) {
-      console.error(e);
-      alert("Gönderilemedi. Warpcast içinde deneyin.");
-    }
-  }
-
   return (
-    <div className="container">
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div className="h1">🌙 MoodCaster</div>
-        <span className="subtle">Mood → Category → Generate → Post</span>
-      </div>
+    <div className="mc-root">
+      <Header />
 
-      {!inMini && (
-        <div className="card" style={{ display: "grid", gap: 8 }}>
-          <div className="subtle">
-            Mini-app konteynerinde değilsin. Cast & wallet için Warpcast içinde aç.
+      <div className="mc-page">
+        {/* step 1: mood */}
+        <MoodGrid
+          selected={mood}
+          onSelect={(m) => { setMood(m); setCategory(null); setText(""); }}
+          diverse={diverse}
+          onToggleDiverse={setDiverse}
+        />
+
+        {/* step 2: category (shows selected mood chip) */}
+        <CategoryGrid
+          selected={category}
+          onSelect={(c) => { setCategory(c); setText(""); }}
+          mood={mood}
+          diverse={diverse}
+          onToggleDiverse={setDiverse}
+        />
+
+        {/* step 3: preview/post */}
+        <div style={{ opacity: canGenerate ? 1 : 0.6, pointerEvents: canGenerate ? "auto" : "none" }}>
+          <PreviewPost
+            text={text}
+            setText={setText}
+            mood={mood || "calm"}
+            category={category || "tech_insight"}
+            onRegenerate={callGenerate}
+          />
+        </div>
+
+        {!inMini && (
+          <div className="mc-info">
+            You are viewing outside Warpcast. Posting works best inside the Mini App.
           </div>
-          <OpenInWarpcast />
-        </div>
-      )}
-
-      <div className="card">
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>1) Mood seç</div>
-        <div className="row">
-          {MOODS.map((m) => (
-            <Chip key={m} label={m} active={mood === m} onClick={() => setMood(m)} />
-          ))}
-        </div>
+        )}
       </div>
 
-      <div className="card">
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>2) Kategori seç</div>
-        <div className="row">
-          {CATEGORIES.map((c) => (
-            <Chip
-              key={c}
-              label={c}
-              active={category === c}
-              onClick={() => setCategory(c)}
-            />
-          ))}
-        </div>
-      </div>
+      <Footer />
 
-      <div className="card" style={{ display: "grid", gap: 8 }}>
-        <div style={{ fontWeight: 700 }}>3) İpucu (opsiyonel)</div>
-        <input
-          className="input"
-          placeholder="öneri: mention ekle, kısa tut, 1 emoji kullan…"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-        />
-        <div>
-          <button
-            className="btn primary"
-            onClick={handleGenerate}
-            disabled={!canGenerate || loading}
-          >
-            {loading ? "Generating…" : "Generate"}
-          </button>
-        </div>
+      <div className="mc-generate-bar">
+        <button
+          className={"mc-btn mc-btn--primary" + (!canGenerate || loading ? " mc-btn--disabled" : "")}
+          onClick={callGenerate}
+          disabled={!canGenerate || loading}
+        >
+          {loading ? "Generating…" : "Generate"}
+        </button>
       </div>
-
-      <div className="card" style={{ display: "grid", gap: 8 }}>
-        <div style={{ fontWeight: 700 }}>4) Metin (düzenlenebilir)</div>
-        <textarea
-          className="textarea"
-          placeholder="Generate sonrası burada görünecek…"
-          value={castText}
-          onChange={(e) => setCastText(e.target.value)}
-        />
-        <div className="row">
-          <button className="btn primary" onClick={handlePost} disabled={!canPost}>
-            Post
-          </button>
-          <AddMiniApp />
-        </div>
-      </div>
-
-      <div className="divider" />
-      <WalletConnect />
     </div>
   );
 }
