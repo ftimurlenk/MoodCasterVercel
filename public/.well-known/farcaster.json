@@ -8,8 +8,8 @@
     "cast"
   ],
   "accountAssociation": {
-    "header": "REPLACE_WITH_HEADER_FROM_FARCASTER_DEV_PANEL",
-    "payload": "REPLACE_WITH_PAYLOAD_FROM_FARCASTER_DEV_PANEL",
-    "signature": "REPLACE_WITH_SIGNATURE_FROM_FARCASTER_DEV_PANEL"
+    "header": "eyJmaWQiOjI2MDU0MiwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDkxRmQ2NzI2NkZDNWYxZGJBODk5QjMwMjg5OTlEM0VmYzkxODJGZTkifQ",
+    "payload": "eyJkb21haW4iOiJtb29kLWNhc3Rlci12ZXJjZWwudmVyY2VsLmFwcCJ9",
+    "signature": "orq53o7doTLKyKJEK2r5yJNDlNc7Ft4FcsQ+r8YkTtc//1w3gx8nRc7P98bJ5EzO4K7CHDmZJU4vLzMn1La2QBs="
   }
 }
