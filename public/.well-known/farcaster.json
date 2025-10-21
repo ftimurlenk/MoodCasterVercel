@@ -1,15 +1,15 @@
 {
   "name": "MoodCaster",
-  "description": "Generate English AI casts from your mood + category and post to Farcaster.",
-  "iconUrl": "https://your-domain/icon.png",
-  "splashImageUrl": "https://your-domain/og.png",
-  "url": "https://your-domain/",
+  "description": "Generate AI-crafted casts from your mood + category and post to Farcaster.",
+  "iconUrl": "https://mood-caster-vercel.vercel.app/icon.png",
+  "splashImageUrl": "https://mood-caster-vercel.vercel.app/og.png",
+  "url": "https://mood-caster-vercel.vercel.app/",
   "requestedPermissions": [
     "cast"
   ],
   "accountAssociation": {
-    "header": "0x...",
-    "payload": "eyJkb21haW4iOiJ5b3VyLWRvbWFpbiJ9",
-    "signature": "0x..."
+    "header": "REPLACE_WITH_HEADER_FROM_FARCASTER_DEV_PANEL",
+    "payload": "REPLACE_WITH_PAYLOAD_FROM_FARCASTER_DEV_PANEL",
+    "signature": "REPLACE_WITH_SIGNATURE_FROM_FARCASTER_DEV_PANEL"
   }
 }
