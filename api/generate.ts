@@ -1,35 +1,72 @@
-import Groq from 'groq-sdk';
-export const config = { runtime: 'edge' };
+// api/generate.ts
+export const runtime = 'edge' // bu dosyanın Edge Function olarak derleneceğini açıkça belirt
+
+type GenBody = {
+  prompt?: string
+  mood?: string
+  category?: string
+}
+
 export default async function handler(req: Request): Promise<Response> {
-  if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  const { GROQ_API_KEY, GROQ_MODEL_ID } = process.env as Record<string, string | undefined>;
-  if (!GROQ_API_KEY) return new Response(JSON.stringify({ error: 'Missing GROQ_API_KEY' }), { status: 500 });
-  const { mood, category, diversity } = await req.json() as any;
-  if (!mood || !category) return new Response(JSON.stringify({ castText: '', error: 'mood and category are required' }), { status: 400 });
-  const groq = new Groq({ apiKey: GROQ_API_KEY });
-  const MODEL_ID = GROQ_MODEL_ID || 'llama-3.1-8b-instant';
-  const styleHints = ['Vary sentence openings; avoid templates.','Use one vivid but natural adjective.','Ask one short rhetorical question.','Prefer active voice and fresh verbs.','Avoid cliches and common slogans.'];
-  const hint = category==='Good Night'?'Write something relaxing and positive before sleep.':(category==='Good Morning'?'Write something energizing and uplifting for a fresh start.':'');
-  const styleHint = styleHints[Math.floor(Math.random()*styleHints.length)];
-  const weekday = new Date().toLocaleDateString('en-US',{weekday:'long'});
-  const prompt = `You are MoodCaster, an English-only Farcaster copywriter.
-Mood: ${mood}
-Category: ${category}
-${hint}
-Style: ${styleHint}
-Context: Today is ${weekday}.
-Write ONE short cast (<= 280 chars) in English only. Friendly tone, no hashtags, no markdown, no financial advice.`;
-  const diversityOn = diversity==='high';
-  try{
-    const r = await groq.chat.completions.create({
-      model: MODEL_ID, messages:[{role:'user',content:prompt}],
-      temperature: diversityOn?0.95:0.9, top_p: diversityOn?0.98:0.95,
-      presence_penalty: diversityOn?0.8:0.6, frequency_penalty: diversityOn?1.0:0.8,
-      seed: Math.floor(Math.random()*1e9), max_tokens: 120
-    });
-    const castText = r.choices?.[0]?.message?.content?.trim() || '';
-    return new Response(JSON.stringify({ castText }), { status:200, headers:{'Content-Type':'application/json'} })
-  }catch(e:any){
-    return new Response(JSON.stringify({ castText:'', error:e?.message||'Unknown error' }), { status:500 })
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'content-type': 'application/json' },
+    })
   }
+
+  const { prompt = '', mood = '', category = '' } = (await req.json()) as GenBody
+
+  const sys = `You are MoodCaster. Generate a short, natural, first-person Farcaster cast in English.
+It should be friendly, concise (max ~220 chars), and optionally include 1 relevant emoji.
+No hashtags unless category absolutely benefits.`
+
+  const user = [
+    prompt && `Prompt: ${prompt}`,
+    mood && `Mood: ${mood}`,
+    category && `Category: ${category}`,
+  ].filter(Boolean).join('\n')
+
+  const model = process.env.GROQ_MODEL_ID || 'llama-3.1-8b-instant'
+  const apiKey = process.env.GROQ_API_KEY
+  if (!apiKey) {
+    return new Response(JSON.stringify({ error: 'Missing GROQ_API_KEY' }), {
+      status: 500,
+      headers: { 'content-type': 'application/json' },
+    })
+  }
+
+  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: sys },
+        { role: 'user', content: user || 'Write a short friendly cast.' },
+      ],
+      temperature: 0.6,
+      max_tokens: 180,
+    }),
+  })
+
+  if (!resp.ok) {
+    const errText = await resp.text().catch(() => '')
+    return new Response(JSON.stringify({ error: 'Groq request failed', detail: errText }), {
+      status: 500,
+      headers: { 'content-type': 'application/json' },
+    })
+  }
+
+  const data = await resp.json()
+  const text =
+    data?.choices?.[0]?.message?.content?.trim?.() ??
+    'Feeling optimistic today ✨'
+
+  return new Response(JSON.stringify({ text }), {
+    headers: { 'content-type': 'application/json' },
+  })
 }
