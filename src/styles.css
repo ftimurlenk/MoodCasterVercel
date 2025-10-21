@@ -1,11 +1,60 @@
-:root{--bg:#0a0a0a;--card:#121212;--muted:#9aa0a6;--text:#eaeef2;--accent:#6e56cf;--accent-2:#3c2f88;--border:#262626}
-*{box-sizing:border-box}html,body,#root{height:100%}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui}
-.container{max-width:820px;margin:24px auto;padding:0 12px;display:grid;gap:16px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
-.h1{font-size:24px;font-weight:700;margin:0;display:flex;gap:8px;align-items:center}
-.subtle{color:var(--muted)}.row{display:flex;gap:8px;flex-wrap:wrap}
-.btn{padding:10px 14px;background:#1f2937;color:#fff;border:1px solid var(--border);border-radius:12px;cursor:pointer}
-.btn.primary{background:var(--accent);border-color:#4f46e5}.btn:disabled{opacity:.6;cursor:not-allowed}
-.input,.textarea{width:100%;background:#0f0f0f;color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px}
-.textarea{min-height:120px}.chip{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:#0f0f0f;color:var(--text);cursor:pointer;font-size:14px}
-.chip.active{border-color:var(--accent);background:var(--accent-2)}.divider{height:1px;background:var(--border);margin:8px 0}.help{font-size:12px;color:var(--muted)}
+:root{
+  --bg:#eef5ff;
+  --panel:#ffffff;
+  --ink:#0b1425;
+  --muted:#64748b;
+  --line:#dfe7f5;
+  --primary:#3b82f6;
+  --primary-2:#2563eb;
+  --soft:#eff6ff;
+  --chip:#e5edff;
+  --shadow:0 10px 25px rgba(13, 42, 84, .08);
+}
+
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{margin:0;background:linear-gradient(#eff5ff,#eaf2ff);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}
+
+.mc-root{min-height:100dvh;display:flex;flex-direction:column}
+.mc-page{max-width:820px;margin:8px auto 80px;padding:0 14px;display:grid;gap:14px}
+
+.mc-header{max-width:820px;margin:18px auto 8px;padding:0 14px;display:flex;align-items:center;gap:12px}
+.mc-badge{width:40px;height:40px;border-radius:12px;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;box-shadow:var(--shadow)}
+.mc-titleblock{display:grid;gap:2px}
+.mc-title{font-weight:800;font-size:18px}
+.mc-sub{font-size:12px;color:var(--muted)}
+.mc-tabs{margin-left:auto;display:flex;gap:8px}
+.mc-tab{border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 12px;color:#0b1425;cursor:pointer}
+.mc-tab--active{background:var(--soft);border-color:#cfe0ff}
+
+.mc-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:var(--shadow)}
+.mc-card-head{display:flex;align-items:center}
+.mc-card-title{font-weight:700}
+.mc-chip{background:var(--chip);padding:4px 8px;border-radius:999px;margin-left:8px;font-size:12px}
+.mc-toggle{margin-left:auto;display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px}
+
+.mc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+@media (min-width:720px){.mc-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.mc-tile{border:1px solid var(--line);background:#fff;border-radius:14px;padding:14px;text-align:left;cursor:pointer;box-shadow:var(--shadow)}
+.mc-tile--active{outline:2px solid var(--primary);background:var(--soft)}
+.mc-emoji{font-size:22px;margin-bottom:6px}
+.mc-tile-title{font-weight:700}
+.mc-tile-desc{color:var(--muted);font-size:12px}
+
+.mc-textarea{width:100%;min-height:140px;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px}
+.mc-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.mc-row-gap{flex:1}
+.mc-btn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;cursor:pointer}
+.mc-btn--primary{background:var(--primary);border-color:var(--primary-2);color:#fff}
+.mc-btn--disabled{opacity:.65;cursor:not-allowed}
+.mc-count{font-size:12px;color:var(--muted)}
+.mc-count--over{color:#ef4444}
+
+.mc-footer{margin:18px auto 24px;text-align:center;color:var(--muted);font-size:12px}
+
+.mc-info{font-size:12px;color:var(--muted);text-align:center}
+
+.mc-generate-bar{
+  position:fixed;left:0;right:0;bottom:12px;display:flex;justify-content:center;pointer-events:none
+}
+.mc-generate-bar .mc-btn{pointer-events:auto}
