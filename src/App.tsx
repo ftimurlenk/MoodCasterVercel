@@ -3,7 +3,7 @@ import { readyMiniApp, postCastFarcaster, isInMiniApp } from "./lib/farcaster";
 import { MOODS, CATEGORIES, MAX_CHARS, MoodKey, CategoryKey } from "./constants";
 import "./styles.css";
 
-type GenResp = { text?: string; error?: string };
+type GenResp = { text?: string; error?: string; fallback?: boolean; detail?: string };
 
 // basit yardımcılar
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -87,8 +87,19 @@ export default function App() {
         throw new Error(String(data?.error || res.statusText || "Generate failed"));
       }
 
-      setText((data.text || "").trim().slice(0, MAX_CHARS));
+      const generated = (data.text || "").trim();
+      if (!generated) {
+        throw new Error("Boş yanıt alındı");
+      }
+
+      setText(generated.slice(0, MAX_CHARS));
       setStep(Step.Preview);
+      if (data.fallback) {
+        console.warn("AI fallback used", data.detail);
+        alert(
+          "AI servisine ulaşılamadı, sana varsayılan bir metin önerdik. Daha sonra tekrar dene."
+        );
+      }
     } catch (e: any) {
       const msg = String(e?.message || e);
       if (msg.toLowerCase().includes("abort") || msg.includes("timeout")) {
