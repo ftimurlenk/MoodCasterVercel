@@ -106,7 +106,16 @@ export default function App() {
     if (!t) return alert("Önce metni oluştur.");
     try {
       const res = await postCastFarcaster(t);
-      if (res?.cancelled) return;
+      if (res?.cancelled) {
+        alert("Cast gönderimi iptal edildi.");
+        return;
+      }
+      if (res?.fallback) {
+        alert(
+          "Warpcast cast oluşturma sayfası açıldı. Metni oradan paylaşabilirsin."
+        );
+        return;
+      }
       alert("Cast composer açıldı / gönderildi.");
     } catch (e) {
       console.error(e);
